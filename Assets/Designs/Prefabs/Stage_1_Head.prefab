@@ -121,3 +121,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19862ba38d24704ca6d4f13f7bfe172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _mesh: {fileID: 0}
+  _skinnedMeshRenderer: {fileID: 0}

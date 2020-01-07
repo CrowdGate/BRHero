@@ -36,7 +36,7 @@ public class MeshMove : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
     public void OnBeginDrag(PointerEventData eventData)
     {
         isDeactiveTrigger = true;
-        Debug.Log("Hoge");
+        //Debug.Log("Hoge");
         Vector3 TargetPos = Camera.main.ScreenToWorldPoint(eventData.position);
         TargetPos.z = gameObject.transform.position.z;
         gameObject.transform.position = TargetPos;
@@ -44,7 +44,7 @@ public class MeshMove : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 
     public void OnDrag(PointerEventData eventData)
     {
-        Debug.Log("Fuga");
+        //Debug.Log("Fuga");
         Vector3 TargetPos = Camera.main.ScreenToWorldPoint(eventData.position);
         TargetPos.z = gameObject.transform.position.z;
         gameObject.transform.position = TargetPos;
@@ -57,6 +57,6 @@ public class MeshMove : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("Piyo");
+        //Debug.Log("Piyo");
     }
 }
