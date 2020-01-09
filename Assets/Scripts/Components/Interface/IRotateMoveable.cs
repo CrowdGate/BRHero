@@ -2,5 +2,5 @@
 
 public interface IRotateMoveable
 {
-    void OnRotate(float angle);
+    void OnRotate(Vector2 movePos);
 }

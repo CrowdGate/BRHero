@@ -12,9 +12,8 @@ public class PartsController : MonoBehaviour
 
     private void Start()
     {
-        moveObj.OnDraging += (angle) => {
-            Debug.Log(angle);
-            parts.OnRotate(angle);
+        moveObj.OnDraging += (movePos) => {
+            parts.OnRotate(movePos);
         };
     }
 }

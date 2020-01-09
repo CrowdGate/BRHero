@@ -5,8 +5,9 @@ using UnityEngine;
 public class RotateParts : MonoBehaviour, IRotateMoveable
 {
     // 回転するパーツの制御クラス
-    float maxAngle = 90;
-    float minAngle = -90;
+
+    //[SerializeField] float maxAngle = 180;
+    //[SerializeField] float minAngle = 0;
 
     Vector3 rotate = new Vector3();
 
@@ -15,15 +16,42 @@ public class RotateParts : MonoBehaviour, IRotateMoveable
 
     private void Awake()
     {
-        rotate = gameObject.transform.localEulerAngles;
+        rotate = gameObject.transform.eulerAngles;
+        Debug.Log(rotate);
     }
 
     // 自身を回転させる
-    public void OnRotate(float angle)
+    public void OnRotate(Vector2 movePos)
     {
-        if (angle < minAngle) angle = minAngle;
-        else if (maxAngle < angle) angle = maxAngle;
+        // 回転軸vecA
+        Vector2 vecA = gameObject.transform.position;
+        // タッチ軸vecB
+        Vector2 vecB = movePos;
 
-        gameObject.transform.localRotation = Quaternion.Euler(rotate.x, rotate.y, angle);
+        float angle = GetAngle(vecA, vecB);
+
+        //if (angle < minAngle) angle = minAngle;
+        //else if (angle > maxAngle) angle = maxAngle;
+
+        gameObject.transform.rotation = Quaternion.Euler(rotate.x, rotate.y, -angle);
+    }
+
+    // 開始点から目標点へのアングルを取得
+    float GetAngle(Vector2 start, Vector2 target)
+    {
+        Vector2 dt = target - start;
+        float rad = Mathf.Atan2(dt.x, dt.y);
+        float degree = rad * Mathf.Rad2Deg;
+
+        if (degree < 0)
+        {
+            degree += 360;
+        }
+        else if (degree > 360)
+        {
+            degree -= 360;
+        }
+
+        return degree;
     }
 }
