@@ -17,7 +17,6 @@ public class RotateParts : MonoBehaviour, IRotateMoveable
     private void Awake()
     {
         rotate = gameObject.transform.eulerAngles;
-        Debug.Log(rotate);
     }
 
     // 自身を回転させる

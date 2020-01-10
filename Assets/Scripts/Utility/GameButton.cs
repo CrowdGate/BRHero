@@ -11,7 +11,7 @@ public class GameButton : MonoBehaviour
     {
         None,
 
-        Confirm,
+        Dicide,
         Skip,
         Retry,
 
