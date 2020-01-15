@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Game : MonoBehaviour
 {
@@ -12,14 +13,18 @@ public class Game : MonoBehaviour
 
     [SerializeField, HeaderAttribute("メインゲームデータ")]
     PlayerProvider playerProvider;
-    [SerializeField] Norma norma;
-    [SerializeField] Slider slider;
+    [SerializeField] NormaProvider normaProvider;
+    [SerializeField] ReactionProvider reactionProvider;
 
     Judgement judgement;
     CanvasManager canvasManager;
     Stage stage;
+    CameraManager cameraManager;
+    GameUGUI gameUGUI;
+    CompleteUGUI compUGUI;
 
-    int stageNo { get; set; } = 1;
+    int stageNo = 1;
+    int compRate = 0;
 
     private void Awake()
     {
@@ -33,11 +38,16 @@ public class Game : MonoBehaviour
         judgement = GetComponent<Judgement>();
         canvasManager = GetComponent<CanvasManager>();
         stage = GetComponent<Stage>();
+        cameraManager = GetComponent<CameraManager>();
+        gameUGUI = GetComponent<GameUGUI>();
+        compUGUI = GetComponent<CompleteUGUI>();
 
         stageNo = PlayerPrefs.GetInt("CurrentStageNo", 1);
 
         // UGUIの切り替え
         canvasManager.SetGame();
+        // カメラの切り替え
+        cameraManager.ViewMainCamera();
 
         // 各種ボタンの設定
         foreach (var button in gameButtons)
@@ -60,15 +70,15 @@ public class Game : MonoBehaviour
     // 成否判定処理
     void ConfirmJudgement()
     {
+        gameUGUI.OnDicide();
+
         // 操作キャラの回転情報を確定
-        playerProvider.Judgement();
+        playerProvider.SetRotateEnd();
         // 達成率を取得
-        int rate = judgement.NormaJudgement(playerProvider.allRotateList, norma.normaList);
-        slider.value = rate;
-        Debug.Log("rate = " + rate);
+        compRate = judgement.NormaJudgement(playerProvider.allRotateList, normaProvider.norma.normaList);
 
         // 成功だったら演出コルーチンを実行
-        int rank = stage.GetStageClear(stageNo, rate);
+        int rank = stage.GetStageClear(stageNo, compRate);
 
         if (rank > 0) StartCoroutine(SuccsessRoutine(rank));
         else StartCoroutine(FailedRoutine());
@@ -77,8 +87,25 @@ public class Game : MonoBehaviour
     // 成功演出
     IEnumerator SuccsessRoutine(int rank)
     {
+        // カメラの切り替え
+        cameraManager.ViewReactionCamera();
+
+        //yield return new WaitForSeconds(1f);
+
+        // 成功演出再生
+        StartCoroutine(reactionProvider.ReactionRoutine(stageNo));
+
+        yield return new WaitForSeconds(5f);
+
+        cameraManager.ViewMainCamera();
+
         // UGUIの切り替え
         canvasManager.SetComplete();
+        compUGUI.SetRateState(compRate);
+
+        int nextStageNo = stageNo + 1;
+        if (nextStageNo > stage.stageNoMax) nextStageNo = 1;
+        PlayerPrefs.SetInt("CurrentStageNo", nextStageNo);
 
         Debug.Log("成功演出");
 
@@ -88,6 +115,11 @@ public class Game : MonoBehaviour
     // 失敗演出
     IEnumerator FailedRoutine()
     {
+        // 失敗演出
+        playerProvider.PlayFailed();
+
+        yield return new WaitForSeconds(2f);
+
         // UGUIの切り替え
         canvasManager.SetFailed();
 

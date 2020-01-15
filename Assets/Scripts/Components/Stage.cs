@@ -7,9 +7,13 @@ public class Stage : MonoBehaviour
     // ステージクラス
     StageData stageData;
 
+    // ステージNo上限値
+    public int stageNoMax { get; private set; }
+
     void Start()
     {
         stageData = Resources.Load<StageData>(StageData.classPass);
+        stageNoMax = stageData.GetStageNoMax();
     }
 
     // 対象のステージの達成率を返す(0:失敗 1:★ 1:★★ 3:★★★)

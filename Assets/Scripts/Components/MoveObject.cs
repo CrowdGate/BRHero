@@ -22,6 +22,11 @@ public class MoveObject : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         isDrag = false;
     }
 
+    public void Diside()
+    {
+        Destroy(gameObject);
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         isDeactiveTrigger = true;

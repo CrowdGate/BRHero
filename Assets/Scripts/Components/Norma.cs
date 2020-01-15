@@ -21,9 +21,5 @@ public class Norma : MonoBehaviour
         normaObjectList.ForEach(info => {
             normaList.Add(info.transform.localEulerAngles);
         });
-
-        //normaList.ForEach(info => {
-        //    Debug.Log("norma = " + info);
-        //});
     }
 }

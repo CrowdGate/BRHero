@@ -6,13 +6,20 @@ public class RotateParts : MonoBehaviour, IRotateMoveable
 {
     // 回転するパーツの制御クラス
 
-    //[SerializeField] float maxAngle = 180;
-    //[SerializeField] float minAngle = 0;
+    // 回転方向
+    private enum ROTATE_TYPE
+    {
+        X_L,
+        X_R,
+        Y_L,
+        Y_R,
+        Z_L,
+        Z_R,
+    };
+
+    [SerializeField] ROTATE_TYPE type = ROTATE_TYPE.Z_L;
 
     Vector3 rotate = new Vector3();
-
-    Vector3 myStartPos { get; set; } = new Vector3();
-    Quaternion myQuaternion { get; set; } = new Quaternion();
 
     private void Awake()
     {
@@ -28,11 +35,40 @@ public class RotateParts : MonoBehaviour, IRotateMoveable
         Vector2 vecB = movePos;
 
         float angle = GetAngle(vecA, vecB);
+        Quaternion qua = new Quaternion();
 
-        //if (angle < minAngle) angle = minAngle;
-        //else if (angle > maxAngle) angle = maxAngle;
+        switch (type)
+        {
+            case ROTATE_TYPE.X_R:
+                angle = -angle;
+                qua = Quaternion.Euler(angle, rotate.y, rotate.z);
+                break;
+            case ROTATE_TYPE.X_L:
+                qua = Quaternion.Euler(angle, rotate.y, rotate.z);
+                break;
+            case ROTATE_TYPE.Y_R:
+                angle = -angle;
+                qua = Quaternion.Euler(rotate.x, angle, rotate.z);
+                break;
+            case ROTATE_TYPE.Y_L:
+                qua = Quaternion.Euler(rotate.x, angle, rotate.z);
+                break;
+            case ROTATE_TYPE.Z_R:
+                angle = -angle;
+                qua = Quaternion.Euler(rotate.x, rotate.y, angle);
+                break;
+            case ROTATE_TYPE.Z_L:
+                qua = Quaternion.Euler(rotate.x, rotate.y, angle);
+                break;
+            default:
+                break;
+        };
 
-        gameObject.transform.rotation = Quaternion.Euler(rotate.x, rotate.y, -angle);
+        gameObject.transform.rotation = qua;
+
+        Debug.Log("angle = " + angle);
+        Debug.Log("qua = " + qua);
+        Debug.Log("RotateParts = " + gameObject.transform.rotation);
     }
 
     // 開始点から目標点へのアングルを取得

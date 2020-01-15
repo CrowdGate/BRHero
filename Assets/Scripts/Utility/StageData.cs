@@ -18,9 +18,14 @@ public class StageData : ScriptableObject
             normaMin = stageData.normaMin,
             normaMid = stageData.normaMid,
             normaMax = stageData.normaMax,
+            reactionCameraPos = stageData.reactionCameraPos,
         };
 
         return res;
+    }
+    public int GetStageNoMax()
+    {
+        return StageList.Count;
     }
     public int GetStageNormaMin(int stageNo)
     {
@@ -34,13 +39,18 @@ public class StageData : ScriptableObject
     {
         return StageList.Find(p => p.stageNo == stageNo).normaMax;
     }
+    public Vector3 GetReactionCameraPos(int stageNo)
+    {
+        return StageList.Find(p => p.stageNo == stageNo).reactionCameraPos;
+    }
 }
 
 [System.Serializable]
 public class StageState
 {
-    public int stageNo;                         // ステージ番号
-    [Range(0, 100)] public int normaMin = 50;   // 必要ノルマ最低値
-    [Range(0, 100)] public int normaMid = 70;   // 必要ノルマ中間値
-    [Range(0, 100)] public int normaMax = 90;   // 必要ノルマ最高値
+    public int stageNo;                                             // ステージ番号
+    [Range(0, 100)] public int normaMin = 50;                       // 必要ノルマ最低値
+    [Range(0, 100)] public int normaMid = 70;                       // 必要ノルマ中間値
+    [Range(0, 100)] public int normaMax = 90;                       // 必要ノルマ最高値
+    public Vector3 reactionCameraPos = new Vector3(-5, 2, -3.5f);   // リアクションカメラ移動地点
 }

@@ -14,8 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StageList:
   - stageNo: 1
-    normaList: []
+    normaMin: 50
+    normaMid: 70
+    normaMax: 90
+    reactionCameraPos: {x: -20, y: 2, z: -6}
   - stageNo: 2
-    normaList: []
+    normaMin: 50
+    normaMid: 70
+    normaMax: 90
+    reactionCameraPos: {x: -5, y: 2, z: -3.5}
   - stageNo: 3
-    normaList: []
+    normaMin: 50
+    normaMid: 70
+    normaMax: 90
+    reactionCameraPos: {x: -5, y: 2, z: -3.5}
