@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using System;
 
 public class Result : MonoBehaviour
 {
@@ -9,6 +9,10 @@ public class Result : MonoBehaviour
 
     [SerializeField, HeaderAttribute("リザルトボタンリスト")]
     List<GameButton> gameButtons = new List<GameButton>();
+
+    public event Action OnNext;
+    public event Action OnRetry;
+    public event Action OnHome;
 
     void Start()
     {
@@ -40,14 +44,14 @@ public class Result : MonoBehaviour
     }
     void Next()
     {
-        SceneManager.LoadScene("Game");
+        OnNext?.Invoke();
     }
     void Retry()
     {
-        SceneManager.LoadScene("Game");
+        OnRetry?.Invoke();
     }
     void Home()
     {
-        SceneManager.LoadScene("Game");
+        OnHome?.Invoke();
     }
 }

@@ -66,9 +66,9 @@ public class RotateParts : MonoBehaviour, IRotateMoveable
 
         gameObject.transform.rotation = qua;
 
-        Debug.Log("angle = " + angle);
-        Debug.Log("qua = " + qua);
-        Debug.Log("RotateParts = " + gameObject.transform.rotation);
+        //Debug.Log("angle = " + angle);
+        //Debug.Log("qua = " + qua);
+        //Debug.Log("RotateParts = " + gameObject.transform.rotation);
     }
 
     // 開始点から目標点へのアングルを取得

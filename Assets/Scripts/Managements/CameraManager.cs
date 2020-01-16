@@ -9,6 +9,7 @@ public class CameraManager : MonoBehaviour
     //[SerializeField] Camera main;
     [SerializeField] ReactionCamera main;
     [SerializeField] ReactionCamera reaction;
+    [SerializeField] Camera rawImage;
 
     public void ViewMainCamera(CameraClearFlags flag = CameraClearFlags.SolidColor)
     {
@@ -26,5 +27,9 @@ public class CameraManager : MonoBehaviour
 
         //main.MoveCamera(new Vector3(-5, 2, -3.5f), 1f);
         //main.RotateCamera(new Vector3(-10, -60, 0), 1f);
+    }
+    public void SurpriseCamera()
+    {
+        rawImage.transform.position = new Vector3(20, 0, -2);
     }
 }

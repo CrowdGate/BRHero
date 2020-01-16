@@ -19,6 +19,15 @@ public class GameButton : MonoBehaviour
         End_Home,
         End_Craim,
         End_Next,
+
+        Start,
+        Skin,
+        Select,
+        Config_OnOff,
+        Config_Sound,
+
+        Chest_Open,
+        Chest_Home,
     }
 
     [SerializeField] Type type;

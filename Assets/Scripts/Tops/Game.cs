@@ -1,12 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine.SceneManagement;
 
 public class Game : MonoBehaviour
 {
     // メインゲーム進行管理クラス
+
+    enum GAME_STATE
+    {
+        START,
+        SKIN,
+        PLAY,
+        COMPLETE,
+        FAILED,
+        SURPRISE,
+    };
+
+    GAME_STATE state = GAME_STATE.START;
 
     [SerializeField, HeaderAttribute("メインゲームボタンリスト")]
     List<GameButton> gameButtons = new List<GameButton>();
@@ -15,16 +26,20 @@ public class Game : MonoBehaviour
     PlayerProvider playerProvider;
     [SerializeField] NormaProvider normaProvider;
     [SerializeField] ReactionProvider reactionProvider;
+    [SerializeField] ChestManager chestManager;
 
     Judgement judgement;
     CanvasManager canvasManager;
     Stage stage;
+    Config config;
     CameraManager cameraManager;
     GameUGUI gameUGUI;
     CompleteUGUI compUGUI;
+    Result result;
 
     int stageNo = 1;
     int compRate = 0;
+    int surpriseGetCount = 0;
 
     private void Awake()
     {
@@ -38,14 +53,30 @@ public class Game : MonoBehaviour
         judgement = GetComponent<Judgement>();
         canvasManager = GetComponent<CanvasManager>();
         stage = GetComponent<Stage>();
+        config = GetComponent<Config>();
         cameraManager = GetComponent<CameraManager>();
         gameUGUI = GetComponent<GameUGUI>();
         compUGUI = GetComponent<CompleteUGUI>();
+        result = GetComponent<Result>();
 
         stageNo = PlayerPrefs.GetInt("CurrentStageNo", 1);
+        surpriseGetCount = PlayerPrefs.GetInt("SurpriseGetCount", 0);
+
+
+        var gameMode = PlayerPrefs.GetString("GameMode", GAME_STATE.START.ToString());
 
         // UGUIの切り替え
-        canvasManager.SetGame();
+        if (gameMode == GAME_STATE.START.ToString())
+        {
+            canvasManager.SetStart();
+            playerProvider.InitStart();
+        }
+        else if (gameMode == GAME_STATE.PLAY.ToString())
+        {
+            canvasManager.SetGame();
+            playerProvider.GameStart();
+        }
+
         // カメラの切り替え
         cameraManager.ViewMainCamera();
 
@@ -56,15 +87,79 @@ public class Game : MonoBehaviour
             {
                 button.OnMyType += (type) => ConfirmJudgement();
             }
-            else if (button.GetButtonType() == GameButton.Type.Retry)
-            {
-
-            }
             else if (button.GetButtonType() == GameButton.Type.Skip)
             {
 
             }
+            else if (button.GetButtonType() == GameButton.Type.Start)
+            {
+                button.OnMyType += (type) => GameStart();
+            }
+            else if (button.GetButtonType() == GameButton.Type.Skin)
+            {
+                button.OnMyType += (type) => Skin();
+            }
+            else if (button.GetButtonType() == GameButton.Type.Select)
+            {
+                button.OnMyType += (type) => Select();
+            }
+            else if (button.GetButtonType() == GameButton.Type.Config_OnOff)
+            {
+                button.OnMyType += (type) => ConfigOnOff();
+            }
+            else if (button.GetButtonType() == GameButton.Type.Config_Sound)
+            {
+                button.OnMyType += (type) => ConfigSound();
+            }
         }
+
+        result.OnHome += () => {
+            PlayerPrefs.SetString("GameMode", GAME_STATE.START.ToString());
+            SceneManager.LoadScene("Game");
+        };
+        result.OnNext += () => {
+            // サプライズボックス報酬が獲得できるか
+            if (surpriseGetCount >= 1)
+            {
+                cameraManager.SurpriseCamera();
+                canvasManager.SetSurprise();
+            }
+            else
+            {
+                PlayerPrefs.SetString("GameMode", GAME_STATE.PLAY.ToString());
+                SceneManager.LoadScene("Game");
+            }
+        };
+        result.OnRetry += () => {
+            PlayerPrefs.SetString("GameMode", GAME_STATE.PLAY.ToString());
+            SceneManager.LoadScene("Game");
+        };
+    }
+
+    // ゲーム開始処理
+    void GameStart()
+    {
+        playerProvider.GameStart();
+        // UGUIの切り替え
+        canvasManager.SetGame();
+    }
+    // 各種画面切り替え処理
+    void Skin()
+    {
+
+    }
+    void Select()
+    {
+
+    }
+    // コンフィグ処理
+    void ConfigOnOff()
+    {
+        config.ViewConfig();
+    }
+    void ConfigSound()
+    {
+        config.SetSound();
     }
 
     // 成否判定処理
@@ -103,9 +198,13 @@ public class Game : MonoBehaviour
         canvasManager.SetComplete();
         compUGUI.SetRateState(compRate);
 
+        // データの更新
         int nextStageNo = stageNo + 1;
         if (nextStageNo > stage.stageNoMax) nextStageNo = 1;
         PlayerPrefs.SetInt("CurrentStageNo", nextStageNo);
+
+        surpriseGetCount++;
+        if (surpriseGetCount < 5) PlayerPrefs.SetInt("SurpriseGetCount", surpriseGetCount);
 
         Debug.Log("成功演出");
 

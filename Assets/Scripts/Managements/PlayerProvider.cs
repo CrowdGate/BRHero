@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class PlayerProvider : MonoBehaviour
 {
@@ -33,6 +34,18 @@ public class PlayerProvider : MonoBehaviour
         staticObj.transform.parent = this.transform;
         ragdoll = staticObj.GetComponent<Ragdoll>();
         if (ragdoll != null) ragdollList.Add(ragdoll);
+    }
+
+    public void InitStart()
+    {
+        gameObject.transform.DORotate(new Vector3(0, 360f, 0), 6f, RotateMode.FastBeyond360)
+        .SetEase(Ease.Linear)
+        .SetLoops(-1, LoopType.Restart);
+    }
+    public void GameStart()
+    {
+        gameObject.transform.DOPause();
+        gameObject.transform.rotation = new Quaternion();
     }
 
     public void SetRotateEnd()
