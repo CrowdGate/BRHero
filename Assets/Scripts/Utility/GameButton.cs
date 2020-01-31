@@ -28,6 +28,15 @@ public class GameButton : MonoBehaviour
 
         Chest_Open,
         Chest_Home,
+
+        Skin_Home,
+        Skin_Craim,
+        Skin_Icon,
+        Skin_TypePoint,
+        Skin_TypeSurprise,
+
+        Select_Home,
+        Select_Icon,
     }
 
     [SerializeField] Type type;

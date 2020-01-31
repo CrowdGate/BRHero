@@ -8,6 +8,12 @@ public class StageData : ScriptableObject
     [SerializeField] List<StageState> StageList;
     public const string classPass = "Data/StageData";
 
+    public enum STAGE_TYPE
+    {
+        NORMAL,     // 通常
+        BOSS,       // ボス
+    };
+
     public StageState GetStage(int stageNo)
     {
         var stageData = StageList.Find(p => p.stageNo == stageNo);
@@ -15,10 +21,10 @@ public class StageData : ScriptableObject
         var res = new StageState
         {
             stageNo = stageData.stageNo,
-            normaMin = stageData.normaMin,
-            normaMid = stageData.normaMid,
-            normaMax = stageData.normaMax,
-            reactionCameraPos = stageData.reactionCameraPos,
+            type = stageData.type,
+            startPos = stageData.startPos,
+            endPos = stageData.endPos,
+            checkPointList = stageData.checkPointList,
         };
 
         return res;
@@ -27,30 +33,30 @@ public class StageData : ScriptableObject
     {
         return StageList.Count;
     }
-    public int GetStageNormaMin(int stageNo)
+    public STAGE_TYPE GetStageType(int stageNo)
     {
-        return StageList.Find(p => p.stageNo == stageNo).normaMin;
+        return StageList.Find(p => p.stageNo == stageNo).type;
     }
-    public int GetStageNormaMid(int stageNo)
+    public Vector3 GetStartPos(int stageNo)
     {
-        return StageList.Find(p => p.stageNo == stageNo).normaMid;
+        return StageList.Find(p => p.stageNo == stageNo).startPos;
     }
-    public int GetStageNormaMax(int stageNo)
+    public Vector3 GetEndPos(int stageNo)
     {
-        return StageList.Find(p => p.stageNo == stageNo).normaMax;
+        return StageList.Find(p => p.stageNo == stageNo).endPos;
     }
-    public Vector3 GetReactionCameraPos(int stageNo)
+    public List<Vector3> GetCheckPointList(int stageNo)
     {
-        return StageList.Find(p => p.stageNo == stageNo).reactionCameraPos;
+        return StageList.Find(p => p.stageNo == stageNo).checkPointList;
     }
 }
 
 [System.Serializable]
 public class StageState
 {
-    public int stageNo;                                             // ステージ番号
-    [Range(0, 100)] public int normaMin = 50;                       // 必要ノルマ最低値
-    [Range(0, 100)] public int normaMid = 70;                       // 必要ノルマ中間値
-    [Range(0, 100)] public int normaMax = 90;                       // 必要ノルマ最高値
-    public Vector3 reactionCameraPos = new Vector3(-5, 2, -3.5f);   // リアクションカメラ移動地点
+    public int stageNo = 1;                                         // ステージ番号
+    public StageData.STAGE_TYPE type = StageData.STAGE_TYPE.NORMAL; // ステージタイプ
+    public Vector3 startPos = new Vector3();                        // キャラクター開始地点
+    public Vector3 endPos = new Vector3();                          // キャラクター終了地点
+    public List<Vector3> checkPointList = new List<Vector3>();      // チェックポイント設置地点リスト
 }

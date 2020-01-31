@@ -9,6 +9,7 @@ public class CompleteUGUI : MonoBehaviour
 
     [SerializeField] Slider slider;
     [SerializeField] RateText rateText;
+    [SerializeField] RateText pointText;
 
     int compRate = 0;
 
@@ -28,6 +29,7 @@ public class CompleteUGUI : MonoBehaviour
             num++;
             slider.value = num;
             rateText.SetRateText(num);
+            pointText.SetPointText(num);
 
             if (num >= compRate) yield break;
             else yield return new WaitForSeconds(0.01f);

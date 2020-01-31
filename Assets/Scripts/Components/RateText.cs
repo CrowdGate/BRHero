@@ -19,4 +19,9 @@ public class RateText : MonoBehaviour
         var str = rate + "%";
         text.text = str;
     }
+    public void SetPointText(int rate)
+    {
+        var str = rate + "pt";
+        text.text = str;
+    }
 }

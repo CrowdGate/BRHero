@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System;
 
 public class PlayerProvider : MonoBehaviour
 {
@@ -9,58 +10,79 @@ public class PlayerProvider : MonoBehaviour
 
     public Player player { get; private set; }
 
-    public List<Vector3> allRotateList { get; private set; } = new List<Vector3>();
+    [SerializeField] List<PlayerMove> moveList = new List<PlayerMove>();
 
-    private int stageNo = 1;
+    public event Action OnGameOver;
 
-    List<Ragdoll> ragdollList = new List<Ragdoll>();
+    private void Awake()
+    {
+        // プレイヤーの読み込み
+        var prefab = Resources.Load<GameObject>("Player/Player_" + 1);
+        var obj = Instantiate(prefab, transform.position, Quaternion.identity);
+        obj.transform.parent = this.transform;
+        player = obj.GetComponent<Player>();
+    }
 
     private void Start()
     {
-        stageNo = PlayerPrefs.GetInt("CurrentStageNo", 1);
+        if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
+        {
+            player.transform.rotation = Quaternion.Euler(0, 90, 0);
+        }
+        else if (Stage.stageState.type == StageData.STAGE_TYPE.BOSS)
+        {
+            player.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
 
-        // 操作対象キャラの読み込み
-        var prefab = Resources.Load<GameObject>("Player/Dynamic_" + stageNo);
-        var publicObj = Instantiate(prefab, transform.position, Quaternion.identity);
-        publicObj.transform.parent = this.transform;
-        Player playerObj = publicObj.GetComponent<Player>();
-        player = playerObj;
-        Ragdoll ragdoll = publicObj.GetComponent<Ragdoll>();
-        if (ragdoll != null) ragdollList.Add(ragdoll);
-
-        // 配置用キャラの読み込み
-        prefab = Resources.Load<GameObject>("Player/Static_" + stageNo);
-        var staticObj = Instantiate(prefab, transform.position, Quaternion.identity);
-        staticObj.transform.parent = this.transform;
-        ragdoll = staticObj.GetComponent<Ragdoll>();
-        if (ragdoll != null) ragdollList.Add(ragdoll);
+        player.OnGameOver += () => {
+            OnGameOver?.Invoke();
+        };
     }
 
-    public void InitStart()
-    {
-        gameObject.transform.DORotate(new Vector3(0, 360f, 0), 6f, RotateMode.FastBeyond360)
-        .SetEase(Ease.Linear)
-        .SetLoops(-1, LoopType.Restart);
-    }
-    public void GameStart()
-    {
-        gameObject.transform.DOPause();
-        gameObject.transform.rotation = new Quaternion();
-    }
 
-    public void SetRotateEnd()
+    public void NormalGameBegin()
     {
-        allRotateList.Clear();
-
-        var list = player.GetRotateList();
-        list.ForEach(r => {
-            allRotateList.Add(r);
+        StartCoroutine(player.NormalGameBegin());
+    }
+    public void BossGameBegin()
+    {
+        StartCoroutine(player.BossGameBegin());
+    }
+    public void NormalGameStart()
+    {
+        moveList.ForEach(info =>
+        {
+            info.SetMove(true);
         });
+
+        player.NormalGameStart();
     }
-    public void PlayFailed()
+    public void BossGameStart()
     {
-        ragdollList.ForEach(rd => {
-            rd.SetRagdoll();
+        player.BossGameStart();
+    }
+    public void NormalGameOver()
+    {
+        moveList.ForEach(info => {
+            info.SetMove(false);
         });
+
+        player.GameOver();
+    }
+    public void BossGameOver()
+    {
+        player.GameOver();
+    }
+    public void NormalGameClear()
+    {
+        moveList.ForEach(info => {
+            info.SetMove(false);
+        });
+
+        player.NormalGameClear();
+    }
+    public void BossGameClear()
+    {
+        player.BossGameClear();
     }
 }

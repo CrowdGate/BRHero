@@ -13,10 +13,14 @@ public class OnLoadManager : MonoBehaviour
         myInstance = dataManager.GetComponent<OnLoadManager>();
         DontDestroyOnLoad(dataManager);
 
-        Debug.unityLogger.logEnabled = false;
+        //Debug.unityLogger.logEnabled = false;
 
         // PlayerPrefs設定
         if (PlayerPrefs.HasKey("GameMode")) PlayerPrefs.SetString("GameMode", "START");
+
+        SetResolution(1024); // 反映はフレーム更新後
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
     }
 
     public static OnLoadManager Instance
@@ -26,5 +30,15 @@ public class OnLoadManager : MonoBehaviour
             return myInstance;
         }
         set { }
+    }
+
+    private static void SetResolution(float baseResolution)
+    {
+        float screenRate = baseResolution / Screen.height;
+        if (screenRate > 1) screenRate = 1;
+        int width = (int)(Screen.width * screenRate);
+        int height = (int)(Screen.height * screenRate);
+
+        Screen.SetResolution(width, height, true);
     }
 }

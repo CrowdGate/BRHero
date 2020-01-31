@@ -21,10 +21,10 @@ public class Ragdoll : MonoBehaviour
         }
     }
 
-    public void SetRagdoll()
+    public void SetKinematic(bool onOff)
     {
         list.ForEach(p => {
-            p.isKinematic = false;
+            p.isKinematic = onOff;
         });
     }
 }
