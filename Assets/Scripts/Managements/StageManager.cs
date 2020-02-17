@@ -11,11 +11,15 @@ public class StageManager : MonoBehaviour
     [SerializeField, HeaderAttribute("ノーマルステージ関連")] public GoalPoint goalPoint;
     [SerializeField] List<CheckPoint> checkPointList = new List<CheckPoint>();
     [SerializeField] public List<FireCreator> fireCreatorList = new List<FireCreator>();
+    [SerializeField] public List<Gimmick> gimmickList = new List<Gimmick>();
 
 
     // ボスステージ関連
     [SerializeField, HeaderAttribute("ボスステージ関連")] public Boss boss;
-    [SerializeField] public List<BossFireCreator> bossFireCreatorList = new List<BossFireCreator>();
+    [SerializeField] public BossFireCreator bossFireCreator;
+    [SerializeField] BossClearGimmick bossClearGimmick;
+
+    public event Action OnCheckPoint;
 
     private void Start()
     {
@@ -27,12 +31,43 @@ public class StageManager : MonoBehaviour
                 });
             };
         }
+
+        if (boss != null)
+        {
+            boss.OnShootFire += () => {
+                BossFire bossFire = bossFireCreator.GetBossFire();
+                if (bossFire != null)
+                {
+                    StartCoroutine(boss.ShootFire(bossFire.transform.position));
+                    boss.fireNum--;
+                }
+            };
+
+            boss.OnGetBoss += () => {
+                boss.transform.parent = bossClearGimmick.GetHuman().transform;
+            };
+        }
+
+        checkPointList.ForEach(check => {
+            check.OnHitCheckPoint += () => {
+                OnCheckPoint?.Invoke();
+            };
+        });
+
+        if (bossClearGimmick != null)
+        {
+            bossClearGimmick.gameObject.SetActive(false);
+        }
+    }
+
+    public void Phase2()
+    {
+        bossFireCreator.GameClear();
     }
 
     public void BossGameClear()
     {
-        bossFireCreatorList.ForEach(creator => {
-            creator.GameClear();
-        });
+        bossClearGimmick.gameObject.SetActive(true);
+        StartCoroutine(bossClearGimmick.BossClearRoutine());
     }
 }

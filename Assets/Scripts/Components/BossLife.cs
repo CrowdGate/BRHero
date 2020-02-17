@@ -27,9 +27,9 @@ public class BossLife : MonoBehaviour
         slider.value = maxHp;
     }
 
-    public void Damage()
+    public void Damage(int damageNum)
     {
-        slider.value -= 1;
+        slider.value -= damageNum;
     }
 
     void SetView(CanvasGroup group, bool OnOff)

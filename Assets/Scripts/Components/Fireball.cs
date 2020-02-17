@@ -9,7 +9,7 @@ public class Fireball : MonoBehaviour
     // ファイアーボールエフェクトクラス
 
     [SerializeField] ParticleSystem effect;
-    MeshRenderer mesh;
+    [SerializeField] ParticleSystem hitEffect;
     Collider collider;
 
     public event Action OnCharacterHit;
@@ -18,16 +18,14 @@ public class Fireball : MonoBehaviour
 
     private void Awake()
     {
-        mesh = GetComponent<MeshRenderer>();
         collider = GetComponent<Collider>();
-        mesh.enabled = false;
         collider.enabled = false;
     }
     public void Play(Vector3 targetPos, float time = 3f)
     {
+        effect.gameObject.SetActive(true);
         effect.Play();
         transform.DOMove(targetPos, time);
-        mesh.enabled = true;
         collider.enabled = true;
     }
     public bool IsPlay()
@@ -37,9 +35,9 @@ public class Fireball : MonoBehaviour
     public void Stop(Vector3 defaultPos)
     {
         effect.Stop();
+        effect.gameObject.SetActive(false);
         transform.DOPause();
         transform.position = defaultPos;
-        mesh.enabled = false;
         collider.enabled = false;
     }
 
@@ -48,6 +46,7 @@ public class Fireball : MonoBehaviour
         // キャラオブジェクトと衝突したらヒットを返す
         if (other.tag == "Character")
         {
+            hitEffect.Play();
             OnCharacterHit?.Invoke();
         }
         else if (other.tag == "Water")
@@ -56,6 +55,7 @@ public class Fireball : MonoBehaviour
         }
         else if (other.tag == "Fire")
         {
+            hitEffect.Play();
             OnFireHit?.Invoke();
         }
     }

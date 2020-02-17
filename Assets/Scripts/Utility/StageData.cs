@@ -21,6 +21,7 @@ public class StageData : ScriptableObject
         var res = new StageState
         {
             stageNo = stageData.stageNo,
+            chapterNo = stageData.chapterNo,
             type = stageData.type,
             startPos = stageData.startPos,
             endPos = stageData.endPos,
@@ -55,6 +56,7 @@ public class StageData : ScriptableObject
 public class StageState
 {
     public int stageNo = 1;                                         // ステージ番号
+    public int chapterNo = 1;                                       // チャプター番号
     public StageData.STAGE_TYPE type = StageData.STAGE_TYPE.NORMAL; // ステージタイプ
     public Vector3 startPos = new Vector3();                        // キャラクター開始地点
     public Vector3 endPos = new Vector3();                          // キャラクター終了地点

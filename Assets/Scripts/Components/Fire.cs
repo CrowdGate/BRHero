@@ -51,7 +51,7 @@ public class Fire : MonoBehaviour
             }
         }
         // 演出用炎と衝突したら
-        else if (other.tag == "Fire")
+        else if (other.tag == "FireBall")
         {
             OnFire?.Invoke();
         }

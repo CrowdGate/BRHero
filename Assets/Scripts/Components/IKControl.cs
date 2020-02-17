@@ -34,7 +34,7 @@ public class IKControl : MonoBehaviour
         animator.SetIKRotation(AvatarIKGoal.RightHand, handRotation);
         //animator.SetIKRotation(AvatarIKGoal.LeftHand, handRotation);
         // 上半身の向きを反映
-        animator.SetLookAtWeight(ikWeight, ikWeight, ikWeight, ikWeight, 0);
+        animator.SetLookAtWeight(ikWeight, ikWeight, 0, 0, 0);
         animator.SetLookAtPosition(pos);
     }
 
@@ -42,11 +42,13 @@ public class IKControl : MonoBehaviour
     {
         rayPos = pos;
         rayRotate = rotate;
-        StartCoroutine(OnIkRoutine());
+        ikWeight = 1;
+        //StartCoroutine(OnIkRoutine());
     }
     public void OffActiveIK()
     {
-        StartCoroutine(OffIkRoutine());
+        ikWeight = 0;
+        //StartCoroutine(OffIkRoutine());
     }
 
     IEnumerator OnIkRoutine()
@@ -67,7 +69,7 @@ public class IKControl : MonoBehaviour
         {
             if (ikWeight <= 0) yield break;
 
-            ikWeight -= Time.deltaTime * 2;
+            ikWeight -= Time.deltaTime * 5;
 
             yield return null;
         }

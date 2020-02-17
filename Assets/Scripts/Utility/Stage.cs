@@ -17,6 +17,7 @@ public class Stage : MonoBehaviour
     public static int stageNoMax { get; private set; }
 
     public static bool isCheckPoint { get; private set; }
+    public static bool isChapterBegin { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void InitializeBeforeSceneLoad()
@@ -28,9 +29,6 @@ public class Stage : MonoBehaviour
         currentStageNo = PlayerPrefs.GetInt("CurrentStageNo", 1);
         //currentStageNo = 4;
         stageData = Resources.Load<StageData>(StageData.classPass);
-        stageState = stageData.GetStage(currentStageNo);
-        stageNoMax = stageData.GetStageNoMax();
-        isCheckPoint = false;
     }
 
     public static Stage Instance
@@ -63,14 +61,25 @@ public class Stage : MonoBehaviour
         isCheckPoint = false;
     }
 
-    public static void SetCheckPointFlg()
+    // ステージ情報の設定
+    public static void SetStageFlgs()
     {
-        int checkNo = 1;
+        // 現在のステージ情報を取得
+        stageState = stageData.GetStage(currentStageNo);
+        stageNoMax = stageData.GetStageNoMax();
+        isCheckPoint = false;
 
+        // ステージ頭のチャプターか
+        if (stageState.chapterNo == 1) isChapterBegin = true;
+        else isChapterBegin = false;
+
+        // チェックポイントを通過済みか
+        int checkNo = 1;
         stageState.checkPointList.ForEach(point => {
             if (SaveData.GetBool("CheckPoint_" + currentStageNo + "_" + checkNo, false))
             {
                 isCheckPoint = true;
+                isChapterBegin = false;
             }
             checkNo++;
         });

@@ -15,7 +15,7 @@ public class GameMain : MonoBehaviour
     PlayerProvider playerProvider;
     [SerializeField] StageProvider stageProvider;
     [SerializeField] CameraControll mainCamera;
-    [SerializeField] BossLife bossLife;
+    [SerializeField] GameUGUI gameUGUI;
 
     CanvasManager canvasManager;
     Config config;
@@ -26,8 +26,7 @@ public class GameMain : MonoBehaviour
         canvasManager.SetHideGame();
 
         // 共有ステージデータ設定
-        Stage.SetCheckPointFlg();
-
+        Stage.SetStageFlgs();
     }
 
     void Start()
@@ -58,69 +57,93 @@ public class GameMain : MonoBehaviour
             stageProvider.stageManager.goalPoint.OnGoal += () => {
                 StartCoroutine(GameClear());
             };
+            // チェックポイント発火処理
+            stageProvider.stageManager.OnCheckPoint += () => {
+                gameUGUI.SetCheckPointIcon();
+            };
             // ゲームオーバー発火時処理
             playerProvider.OnGameOver += () => {
                 StartCoroutine(NormalGameOver());
             };
 
-            if (!Stage.isCheckPoint)
+            if (Stage.isChapterBegin)
             {
-                mainCamera.SetCameraPos(new Vector3(-38, 3, -3));
-                mainCamera.SetCameraRotate(new Vector3(-5, 70, 0));
+                mainCamera.SetCameraLocalPos(new Vector3(-8, 5, -10));
+                mainCamera.SetCameraLocalRotate(new Vector3(-5, 50, 0));
             }
-            else
-            {
-                mainCamera.SetCameraPos(new Vector3(Stage.GetStartPos().x, 3, -10));
-            }
+
+            // その他設定
 
             StartCoroutine(NormalGameStart());
         }
         else if (Stage.stageState.type == StageData.STAGE_TYPE.BOSS)
         {
-            // ボス撃破時発火処理
+            // Boss関連
             stageProvider.stageManager.boss.OnGameClear += () => {
                 StartCoroutine(GameClear());
             };
-            // ゲームオーバー発火時処理
             stageProvider.stageManager.boss.OnGameOver += () => {
                 StartCoroutine(BossGameOver());
             };
-            stageProvider.stageManager.bossFireCreatorList.ForEach(creator => {
-                // ゲームオーバー発火時処理
-                creator.OnGameOver += () => {
-                    StartCoroutine(BossGameOver());
-                };
-                // 背景変化処理
-                creator.OnFireScaleUp += (alpha) => {
-
-                };
-            });
             stageProvider.stageManager.boss.OnHitWater += () => {
-                bossLife.Damage();
+
+            };
+            stageProvider.stageManager.boss.OnBeginPhase1 += () => {
+
+            };
+            stageProvider.stageManager.boss.OnBeginPhase2 += () => {
+                playerProvider.player.SetBossPhase2(stageProvider.stageManager.boss.transform);
+                stageProvider.stageManager.Phase2();
             };
 
-            mainCamera.SetCameraPos(new Vector3(0, 3, -55));
-            bossLife.SetState(stageProvider.stageManager.boss.myLife);
+            // BossFireCreator関連
+            stageProvider.stageManager.bossFireCreator.OnGameOver += () => {
+                StartCoroutine(BossGameOver());
+            };
+            stageProvider.stageManager.bossFireCreator.OnFireDanger += (weight) => {
+                playerProvider.SetPostProcess(weight);
+            };
+            stageProvider.stageManager.bossFireCreator.OnDeadBossFire += () => {
+                stageProvider.stageManager.boss.DamageFireLife(1);
+                gameUGUI.Damage(1);
+            };
+
+            // その他設定
+            mainCamera.SetCameraLocalPos(new Vector3(-6, 3, -2));
+            mainCamera.SetCameraLocalRotate(new Vector3(-5, 80, 0));
+
+            gameUGUI.SetBossLife(stageProvider.stageManager.boss.GetFireLife());
 
             StartCoroutine(BossGameStart());
         }
 
+        // ステージギミックのアクション管理
+        stageProvider.stageManager.gimmickList.ForEach(gimmick => {
+            // ジャンプギミック
+            gimmick.OnJump += (jumpEndPos) => {
+                StartCoroutine(playerProvider.JumpRoutine(jumpEndPos));
+            };
+        });
+
+        // チュートリアルテキスト表示
+        if (Stage.currentStageNo == 1 && Stage.isChapterBegin) gameUGUI.SetTMP(true);
+        else gameUGUI.SetTMP(false);
     }
 
     IEnumerator NormalGameStart()
     {
-        if (!Stage.isCheckPoint) playerProvider.NormalGameBegin();
-
-        yield return new WaitForSeconds(2f);
-
-        if (!Stage.isCheckPoint)
+        if (Stage.isChapterBegin)
         {
+            playerProvider.NormalGameBegin();
+
+            yield return new WaitForSeconds(2f);
+
             stageProvider.NormalGameBegin();
 
             yield return new WaitWhile(() => stageProvider.IsNormalBegin());
 
-            mainCamera.MoveCamera(new Vector3(Stage.GetStartPos().x, 3, -10), 1f);
-            mainCamera.RotateCamera(new Vector3(-5, 0, 0), 1f);
+            mainCamera.MoveLocalCamera(new Vector3(2, 3, -10), 1f);
+            mainCamera.RotateLocalCamera(new Vector3(-5, 0, 0), 1f);
 
             yield return new WaitForSeconds(1f);
         }
@@ -133,6 +156,14 @@ public class GameMain : MonoBehaviour
 
         canvasManager.SetGame();
         playerProvider.NormalGameStart();
+        Sound.PlaySe("Fire", 2, 0.2f, true);
+
+        if (Stage.currentStageNo == 1 && Stage.isChapterBegin)
+        {
+            yield return new WaitForSeconds(3f);
+
+            gameUGUI.SetTMP(false);
+        }
     }
 
     IEnumerator BossGameStart()
@@ -140,16 +171,22 @@ public class GameMain : MonoBehaviour
         playerProvider.BossGameBegin();
         stageProvider.BossGameBegin();
 
-        mainCamera.MoveCamera(new Vector3(0, 3, -5), 2f);
+        yield return new WaitForSeconds(2f);
 
-        yield return new WaitForSeconds(4f);
+        mainCamera.MoveLocalCamera(new Vector3(2, 3, -10), 1f);
+        mainCamera.RotateLocalCamera(new Vector3(-5, 0, 0), 1f);
+
+        yield return new WaitForSeconds(2f);
 
         canvasManager.SetGame();
         playerProvider.BossGameStart();
+        Sound.PlaySe("Fire", 2, 0.2f, true);
     }
 
     IEnumerator GameClear()
     {
+        Sound.StopSe(true);
+
         if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
         {
             playerProvider.NormalGameClear();
@@ -170,7 +207,6 @@ public class GameMain : MonoBehaviour
 
             yield return new WaitForSeconds(2f);
         }
-
 
         canvasManager.SetComplete();
         Stage.SetClearStageNo();
@@ -196,10 +232,12 @@ public class GameMain : MonoBehaviour
     }
     void Retry()
     {
+        Sound.StopSe(true);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
     void Home()
     {
+        Sound.StopSe(true);
         SceneManager.LoadScene("Start");
     }
 }

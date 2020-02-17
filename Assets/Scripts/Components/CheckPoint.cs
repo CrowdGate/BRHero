@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System;
 
 public class CheckPoint : MonoBehaviour
 {
@@ -9,8 +10,11 @@ public class CheckPoint : MonoBehaviour
 
     [SerializeField] int checkNo = 1;
     [SerializeField] GameObject sign;
+    [SerializeField] SpriteRenderer checkText;
 
     public bool isCheck { get; private set; } = false;
+
+    public event Action OnHitCheckPoint;
 
     private void Start()
     {
@@ -24,6 +28,8 @@ public class CheckPoint : MonoBehaviour
         {
             sign.transform.localRotation = Quaternion.Euler(-90, 0, 0);
         }
+
+        checkText.enabled = false;
     }
 
     // キャラがチェックポイントを通過したか
@@ -31,9 +37,15 @@ public class CheckPoint : MonoBehaviour
     {
         if (other.tag == "Character" && !isCheck)
         {
+            Sound.PlaySe("CheckPoint", 3);
             isCheck = true;
             SaveData.SetBool("CheckPoint_" + Stage.currentStageNo + "_" + checkNo, true);
-            sign.transform.DOLocalRotate(Vector3.zero, 0.5f);
+            OnHitCheckPoint?.Invoke();
+            sign.transform.DOLocalRotate(Vector3.zero, 0.5f).SetEase(Ease.Linear);
+            checkText.enabled = true;
+            checkText.transform.DOLocalMoveY(1.5f, 1f).SetEase(Ease.Linear).OnComplete(() => {
+                checkText.enabled = false;
+            });
         }
     }
 }

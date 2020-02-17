@@ -11,70 +11,38 @@ public class Player : MonoBehaviour
     [SerializeField] Hose hose;
     [SerializeField] DeadLine deadLine;
     [SerializeField] IKHandle ikHandle;
-    [SerializeField] CameraControll cameraControll;
+    [SerializeField] Animator animator;
+    [SerializeField] Ragdoll ragdoll;
+    [SerializeField] IKControl ikControl;
 
-    Animator animator;
-    IKControl ikControl;
-    PlayerMove playerMove;
-    Ragdoll ragdoll;
     Collider collider;
 
     bool isMove = false;
 
     public event Action OnGameOver;
 
-    event Action OnShotEnd;
+    event Action OnShootEnd;
 
     private void Awake()
     {
-        animator = GetComponent<Animator>();
-        ikControl = GetComponent<IKControl>();
-        playerMove = GetComponent<PlayerMove>();
-        ragdoll = GetComponent<Ragdoll>();
         collider = GetComponent<Collider>();
-
-        animator.Play("Idle");
-        animator.SetLayerWeight(1, 0);
     }
 
     private void Start()
     {
-        ikHandle.SetOnOff(false);
+        animator.Play("Idle");
+        animator.SetLayerWeight(1, 0);
 
-        if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
-        {
-            cameraControll.SetCameraLocalPos(new Vector3(10, 3, 0));
-            cameraControll.SetCameraLocalRotate(new Vector3(0, -90, 0));
-            cameraControll.SetOrthographicSize(20f);
-            ikHandle.transform.localPosition = new Vector3(-10, 5, 0);
-            ikHandle.distanceZ = 10f;
-            ikHandle.transform.localRotation = Quaternion.Euler(0, 90, 0);
-            ikHandle.SetView(false);
-        }
-        else if (Stage.stageState.type == StageData.STAGE_TYPE.BOSS)
-        {
-            cameraControll.transform.localPosition = new Vector3(0, 3, 0);
-            cameraControll.transform.localRotation = Quaternion.Euler(0, 0, 0);
-            cameraControll.SetOrthographicSize(20f);
-            ikHandle.transform.localPosition = new Vector3(0, 5, 15);
-            ikHandle.distanceZ = 15f;
-            ikHandle.transform.localRotation = Quaternion.Euler(0, 0, 0);
-            ikHandle.SetView(false);
-        }
+        ikHandle.SetOnOff(false);
 
         // タップ判定
         TouchInput.Started += info =>
         {
             if (isMove)
             {
-                //if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
-                //{
-                    Time.timeScale = 0.5f;
-                    ikHandle.SetOnOff(true);
-                    ikHandle.SetView(true);
-                //}
+                ikHandle.SetView(true);
 
-                hose.SetView();
+                ikControl.OnActiveIK(ikHandle.transform.position, ikHandle.transform.rotation);
             }
         };
         TouchInput.Moved += info =>
@@ -88,13 +56,13 @@ public class Player : MonoBehaviour
         {
             if (isMove)
             {
-                //if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
-                //{
-                    ikHandle.SetOnOff(false);
-                    ikHandle.SetView(false);
-                //}
+                ikHandle.SetView(false);
+                animator.Play("Shoot", 1);
 
-                StartCoroutine(hose.ShotRoutine(OnShotEnd));
+                StartCoroutine(hose.ShootRoutine(ikHandle.transform.position, OnShootEnd));
+
+                //Vector3 pos = ikHandle.transform.position - transform.position;
+                //Debug.DrawRay(transform.position, pos, Color.red, 10f);
             }
         };
 
@@ -103,51 +71,45 @@ public class Player : MonoBehaviour
             OnGameOver?.Invoke();
         };
 
-        OnShotEnd += () => {
-            Time.timeScale = 1f;
-
+        // 撃ち終わったらIKを切る
+        OnShootEnd += () => {
             if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL) ikControl.OffActiveIK();
         };
     }
 
     public IEnumerator NormalGameBegin()
     {
-        transform.DOMoveX(Stage.stageState.startPos.x - 2, 1f);
         animator.Play("Run_Static");
 
         yield return new WaitForSeconds(1f);
 
         animator.Play("Idle");
+        yield return new WaitForSeconds(1f);
 
-        yield return new WaitForSeconds(3f);
-
-        transform.DOJump(transform.position, 1, 1, 0.5f);
+        transform.DOJump(transform.position, 1, 1, 0.5f).SetEase(Ease.Linear);
     }
     public IEnumerator BossGameBegin()
     {
-        transform.DOMoveZ(Stage.stageState.startPos.x, 2f);
         animator.Play("Run_Static");
 
         yield return new WaitForSeconds(2f);
 
         animator.Play("Idle");
-        ikHandle.SetOnOff(true);
-        ikControl.OnActiveIK(ikHandle.transform.position, ikHandle.transform.rotation);
     }
     public void NormalGameStart()
     {
-        playerMove.SetMove(true);
         animator.Play("Run_Static");
-
+        ikHandle.SetOnOff(true);
         isMove = true;
     }
     public void BossGameStart()
     {
+        animator.transform.DOLocalRotate(new Vector3(0, 45, 0), 0.2f);
+        ikHandle.SetOnOff(true);
         isMove = true;
     }
     public void GameOver()
     {
-        Time.timeScale = 1f;
         collider.enabled = false;
         animator.enabled = false;
         ragdoll.SetKinematic(false);
@@ -157,12 +119,12 @@ public class Player : MonoBehaviour
         isMove = false;
 
         deadLine.GameEnd();
+        hose.GameEnd();
     }
     public void NormalGameClear()
     {
         collider.enabled = false;
 
-        Time.timeScale = 1f;
         ikControl.OffActiveIK();
         animator.SetLayerWeight(1, 0);
 
@@ -171,15 +133,14 @@ public class Player : MonoBehaviour
         isMove = false;
 
         deadLine.GameEnd();
+        hose.GameEnd();
 
-        playerMove.SetMove(false);
         animator.Play("Idle");
     }
     public void BossGameClear()
     {
         collider.enabled = false;
 
-        Time.timeScale = 1f;
         ikControl.OffActiveIK();
         animator.SetLayerWeight(1, 0);
 
@@ -188,13 +149,49 @@ public class Player : MonoBehaviour
         isMove = false;
 
         deadLine.GameEnd();
+        hose.GameEnd();
 
-        animator.Play("Idle");
+        animator.Play("Jump");
+
+        Vector3 pos = transform.position;
+        pos.z = 5f;
+        var anime = DOTween.Sequence();
+        anime.Append(transform.DOJump(pos, 2f, 1, 1f).SetEase(Ease.Linear).OnComplete(() => {
+            animator.Play("Dance");
+        }));
+        anime.Join(transform.DORotate(new Vector3(0, 90, 0), 0.2f)).SetEase(Ease.Linear);
     }
 
     public void NormalResult()
     {
         animator.Play("Run_Static");
-        transform.DOMoveX(200, 5f);
+        transform.DOMoveX(200, 5f).SetEase(Ease.Linear);
+    }
+
+    public Animator GetAnimator()
+    {
+        return animator;
+    }
+
+    public void JumpRotate()
+    {
+        Quaternion def = animator.transform.localRotation;
+        animator.transform.DOLocalRotate(new Vector3(360, 0, 0), 4f, RotateMode.FastBeyond360).SetRelative().SetEase(Ease.Linear).OnComplete(() => {
+            animator.transform.localRotation = def;
+        });
+    }
+    
+
+    public void SetBossPhase2(Transform target)
+    {
+        ikHandle.SetOnOff(false);
+        ikHandle.SetView(false);
+        hose.GameEnd();
+        Vector3 targetPos = target.position;
+        targetPos.y += 1;
+        ikHandle.transform.position = targetPos;
+        ikControl.OnActiveIK(targetPos, target.rotation);
+
+        animator.transform.DOLocalRotate(new Vector3(0, 90, 0), 0.2f);
     }
 }

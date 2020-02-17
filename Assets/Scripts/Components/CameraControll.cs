@@ -41,9 +41,17 @@ public class CameraControll : MonoBehaviour
     {
         camera.transform.DOMove(endPos, time);
     }
+    public void MoveLocalCamera(Vector3 endPos, float time)
+    {
+        camera.transform.DOLocalMove(endPos, time);
+    }
     // 対象の位置にカメラを回転する処理
     public void RotateCamera(Vector3 endPos, float time)
     {
         camera.transform.DORotate(endPos, time);
+    }
+    public void RotateLocalCamera(Vector3 endPos, float time)
+    {
+        camera.transform.DOLocalRotate(endPos, time);
     }
 }

@@ -2,16 +2,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class GameUGUI : MonoBehaviour
 {
-    [SerializeField] List<Button> buttons;
-    
-    // Dicideボタンが押されたときの処理
-    public void OnDicide()
+    [SerializeField] BossLife bossLife;
+    [SerializeField] TextMeshProUGUI tutorialText;
+    [SerializeField] CheckPointIcon checkPointIcon;
+
+    public void SetBossLife(int life)
     {
-        buttons.ForEach(btn => {
-            btn.interactable = false;
-        });
+        bossLife.SetState(life);
+    }
+    public void Damage(int damageNum)
+    {
+        bossLife.Damage(damageNum);
+    }
+    public void SetTMP(bool onOff)
+    {
+        tutorialText.enabled = onOff;
+    }
+    public void SetCheckPointIcon()
+    {
+        checkPointIcon.SetIcons();
     }
 }

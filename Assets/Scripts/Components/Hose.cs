@@ -7,32 +7,46 @@ public class Hose : MonoBehaviour
 {
     // 水鉄砲(ホース)クラス
 
-    [SerializeField] MeshRenderer line;
-    [SerializeField] Collider collier;
+    [SerializeField] List<WaterCollider> waterColliderList = new List<WaterCollider>();
     [SerializeField] ParticleSystem waterEffect;
+    [SerializeField] ParticleSystem waterHit;
+
 
     private void Start()
     {
-        line.enabled = false;
-        collier.enabled = false;
+        waterColliderList.ForEach(water => {
+            water.OnHitWater += (target) => {
+                waterHit.transform.position = target;
+                waterHit.Play();
+            };
+        });
     }
 
-    public void SetView()
+    public IEnumerator ShootRoutine(Vector3 pos, Action OnEnd)
     {
-        line.enabled = true;
-        collier.enabled = false;
-    }
+        WaterCollider useCollider = new WaterCollider();
+        waterColliderList.ForEach(water => {
+            if (!water.isUse)
+            {
+                useCollider = water;
+            }
+        });
 
-    public IEnumerator ShotRoutine(Action OnEnd)
-    {
-        line.enabled = false;
-        collier.enabled = true;
+        if (useCollider == null) yield break;
+
+        Sound.PlaySe("WaterShoot", 0);
+        useCollider.Shoot(waterEffect.transform.localPosition, pos);
         waterEffect.Play();
 
         yield return new WaitWhile(() => waterEffect.isPlaying);
 
-        waterEffect.Stop();
-        collier.enabled = false;
         OnEnd?.Invoke();
+    }
+
+    public void GameEnd()
+    {
+        waterColliderList.ForEach(water => {
+            water.GameEnd();
+        });
     }
 }

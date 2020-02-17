@@ -18,6 +18,11 @@ public class OnLoadManager : MonoBehaviour
         // PlayerPrefs設定
         if (PlayerPrefs.HasKey("GameMode")) PlayerPrefs.SetString("GameMode", "START");
 
+        Sound.LoadSe("Fire", "SE_Fire");
+        Sound.LoadSe("WaterHit", "SE_WaterHit");
+        Sound.LoadSe("WaterShoot", "SE_WaterShoot");
+        Sound.LoadSe("CheckPoint", "SE_CheckPoint");
+
         SetResolution(1024); // 反映はフレーム更新後
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;

@@ -6,7 +6,6 @@ using System;
 public class IKHandle : MonoBehaviour
 {
     // タップ先に自身を移動させるクラス
-    [SerializeField] Camera orthographic;
     [SerializeField] public float distanceZ = 10f;
 
     SpriteRenderer sprite;
@@ -22,9 +21,14 @@ public class IKHandle : MonoBehaviour
     {
         if (Input.GetMouseButton(0) && OnOff)
         {
-            var pos = orthographic.ScreenToWorldPoint(Input.mousePosition);
-            pos.z = distanceZ;
-            transform.position = pos;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit, 50.0f))
+            {
+                Vector3 pos = hit.point;
+                pos.z = 10f;
+                transform.position = pos;
+            }
         }
     }
 

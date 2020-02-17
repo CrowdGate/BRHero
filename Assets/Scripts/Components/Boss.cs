@@ -8,83 +8,143 @@ public class Boss : MonoBehaviour
 {
     // BOSS制御クラス
 
-    [SerializeField] List<Fireball> fireballList = new List<Fireball>();
-    [SerializeField] List<Vector3> localMovePosList = new List<Vector3>();
-    [SerializeField] FlickerModel model;
-    [SerializeField] BigFireball bigFireball;
-    [SerializeField] ParticleSystem hitWaterEffect;
-    [SerializeField] SkinnedMeshRenderer myMesh;
-    [SerializeField] ParticleSystem deadEffect;
+    [SerializeField] Fireball fireball;
+    [SerializeField] ParticleSystem fireEffect;
+    [SerializeField] Ragdoll ragdoll;
+    [SerializeField] Animator animator;
 
-    [SerializeField] public int myLife = 5;
+    [SerializeField] int fireLife = 5;
+    [SerializeField] int myLife = 1;
 
-    Ragdoll ragdoll;
+    public int fireNum = 0;
+
     Collider collider;
-    Animator animator;
 
     bool isMove = false;
-    int index = 0;
-    int indexMax = 0;
 
     public event Action OnGameOver;
     public event Action OnGameClear;
     public event Action OnHitWater;
+    public event Action OnShootFire;
+    public event Action OnBeginPhase1;
+    public event Action OnBeginPhase2;
+    public event Action OnGetBoss;
 
     private void Awake()
     {
-        ragdoll = GetComponent<Ragdoll>();
         collider = GetComponent<Collider>();
-        animator = GetComponent<Animator>();
     }
 
     private void Start()
     {
-
-        indexMax = fireballList.Count - 1;
-
         collider.enabled = false;
-
-        fireballList.ForEach(fire => {
-            fire.OnCharacterHit += () => {
-                OnGameOver?.Invoke();
-            };
-
-            fire.OnWaterHit += () => {
-                hitWaterEffect.transform.position = fire.transform.position;
-                hitWaterEffect.Play();
-                fire.Stop(transform.localPosition);
-            };
-        });
+        fireNum = fireLife;
     }
 
     // ゲーム開始演出
     public IEnumerator BeginRoutine()
     {
-        transform.DOMoveZ(13, 2f);
-        transform.localRotation = Quaternion.Euler(0, 0, 0);
-        animator.Play("Run_Static");
-
-        yield return new WaitForSeconds(2f);
-
         var anime = DOTween.Sequence();
-        anime.Append(transform.DOMoveY(5f, 2f));
-        anime.Join(transform.DOLocalRotate(new Vector3(0, 180, 0), 0.5f));
-        animator.Play("Falling");
+
+        // 走って目的地まで向かう
+        anime.Append(transform.DOMoveX(9, 2f).SetEase(Ease.Linear));
+        transform.localRotation = Quaternion.Euler(0, 90, 0);
+        animator.Play("Run_Static");
 
         yield return new WaitWhile(() => anime.IsPlaying());
 
-        StartCoroutine(BossRoutine());
+        anime = DOTween.Sequence();
+
+        // 振りむき待機モーションに切り替え
+        anime.Append(transform.DOLocalRotate(new Vector3(0, -90, 0), 0.2f));
+        animator.Play("Idle");
+
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        anime = DOTween.Sequence();
+
+        // ジャンプを2回して怒りを表す
+        anime.Append(transform.DOLocalJump(transform.position, 2f, 2, 1f).SetEase(Ease.Linear));
+
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        anime = DOTween.Sequence();
+
+        // ビルのほうに振り向く
+
+        anime.Append(transform.DOLocalRotate(new Vector3(0, -45, 0), 0.2f));
+
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        OnShootFire?.Invoke();
+
+        isMove = true;
+        StartCoroutine(Phase1());
     }
 
-    IEnumerator BossRoutine()
+    // ビルを狙うフェーズ
+    IEnumerator Phase1()
     {
-        isMove = true;
-
-        StartCoroutine(bigFireball.PlayRoutine());
-        StartCoroutine(Phase1());
+        float time = 0;
+        OnBeginPhase1?.Invoke();
 
         while (true)
         {
+            if (!isMove) yield break;
+
+            time += Time.deltaTime;
+
+            if (time >= 2f && fireNum > 0)
+            {
+                OnShootFire?.Invoke();
+                time = 0;
+            }
+
+            if (fireLife == 0)
+            {
+                StartCoroutine(Phase2());
+
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+
+    // プレイヤーを狙うフェーズ
+    IEnumerator Phase2()
+    {
+        var anime = DOTween.Sequence();
+
+        // プレイヤー側に振り向く
+        anime.Append(transform.DOLocalRotate(new Vector3(0, -90, 0), 0.5f).SetEase(Ease.Linear));
+
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        // ジャンプを1回して怒りを表す
+        anime.Append(transform.DOLocalJump(transform.position, 2f, 1, 0.5f).SetEase(Ease.Linear));
+
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        // 炎を纏い突進の構え
+        animator.Play("Stun");
+        fireball.Stop(transform.localPosition);
+        fireEffect.Play();
+
+        OnBeginPhase2?.Invoke();
+
+        yield return new WaitForSeconds(2f);
+
+        // プレイヤーに向かって突進開始
+        animator.Play("Walk");
+        transform.DOMoveX(5f, 3f).SetEase(Ease.Linear);
+
+        collider.enabled = true;
+
+        while (true)
+        {
+            if (!isMove) yield break;
+
             // 自身のライフが0になったらゲームクリア
             if (myLife == 0)
             {
@@ -96,45 +156,15 @@ public class Boss : MonoBehaviour
         }
     }
 
-    // プレイヤーを狙うフェーズ
-    IEnumerator Phase1()
-    {
-        collider.enabled = true;
-
-        while (true)
-        {
-            if (!isMove)
-            {
-                yield break;
-            }
-            else
-            {
-                //fireballList[index].Play(new Vector3(0,1,0));
-
-                transform.DOLocalMove(localMovePosList[index], 1f);
-
-                yield return new WaitForSeconds(2f);
-
-                if (!isMove) yield break;
-
-                if (index < indexMax) index++;
-                else index = 0;
-            }
-
-            yield return null;
-        }
-    }
 
     // 敗北演出
     public void GameOver()
     {
         isMove = false;
         collider.enabled = false;
-        bigFireball.GameEnd();
-
-        fireballList.ForEach(fire => {
-            fire.Stop(transform.localPosition);
-        });
+        fireball.Stop(transform.localPosition);
+        animator.Play("Idle");
+        transform.DOLocalRotate(new Vector3(0, -180, 0), 0.5f).SetEase(Ease.Linear);
     }
 
 
@@ -143,50 +173,15 @@ public class Boss : MonoBehaviour
     {
         isMove = false;
 
-        fireballList.ForEach(fire => {
-            fire.Stop(transform.localPosition);
-        });
-
-        collider.enabled = false;
-        bigFireball.GameEnd();
+        fireball.Stop(transform.localPosition);
 
         ragdoll.SetKinematic(false);
+        transform.DOPause();
         animator.enabled = false;
 
         yield return new WaitForSeconds(2f);
 
-        myMesh.enabled = false;
-        deadEffect.transform.position = new Vector3(deadEffect.transform.position.x, 1, deadEffect.transform.position.z);
-        deadEffect.Play();
         OnGameClear?.Invoke();
-    }
-
-    IEnumerator HitRoutine()
-    {
-        myLife--;
-        collider.enabled = false;
-
-        hitWaterEffect.transform.position = transform.position;
-        hitWaterEffect.Play();
-        OnHitWater?.Invoke();
-
-        if (myLife > 0)
-        {
-            model.SetFlicker();
-
-            yield return new WaitForSeconds(1.5f);
-
-            collider.enabled = true;
-
-        }
-        else
-        {
-            model.SetFlicker();
-
-            yield return new WaitForSeconds(1.5f);
-
-            yield break;
-        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -194,7 +189,41 @@ public class Boss : MonoBehaviour
         // 水オブジェクトと衝突したらヒットを返す
         if (other.tag == "Water")
         {
-            StartCoroutine(HitRoutine());
+            myLife--;
+            fireEffect.Stop();
+
+            OnHitWater?.Invoke();
         }
+        // プレイヤーと衝突したらゲームオーバー
+        else if (other.tag == "Character")
+        {
+            OnGameOver?.Invoke();
+        }
+        else if (other.tag == "Police")
+        {
+            collider.enabled = false;
+            OnGetBoss?.Invoke();
+        }
+    }
+
+    // ボスの火炎発射
+    public IEnumerator ShootFire(Vector3 targetPos)
+    {
+        fireball.Play(targetPos, 1f);
+        animator.Play("Shoot");
+
+        yield return new WaitForSeconds(1f);
+
+        fireball.Stop(transform.position);
+        animator.Play("Idle");
+    }
+
+    public void DamageFireLife(int damageNum)
+    {
+        fireLife -= damageNum;
+    }
+    public int GetFireLife()
+    {
+        return fireLife;
     }
 }

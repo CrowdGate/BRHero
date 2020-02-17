@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using System;
+using UnityEngine.Rendering.PostProcessing;
 
 public class PlayerProvider : MonoBehaviour
 {
     // 操作キャラ提供クラス
 
+    [SerializeField] PostProcessVolume volume;
+    [SerializeField] AnimationCurve curve;
+
     public Player player { get; private set; }
 
-    [SerializeField] List<PlayerMove> moveList = new List<PlayerMove>();
+    PlayerMove playerMove;
 
     public event Action OnGameOver;
 
@@ -21,13 +25,14 @@ public class PlayerProvider : MonoBehaviour
         var obj = Instantiate(prefab, transform.position, Quaternion.identity);
         obj.transform.parent = this.transform;
         player = obj.GetComponent<Player>();
+        playerMove = GetComponent<PlayerMove>();
     }
 
     private void Start()
     {
         if (Stage.stageState.type == StageData.STAGE_TYPE.NORMAL)
         {
-            player.transform.rotation = Quaternion.Euler(0, 90, 0);
+            player.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
         else if (Stage.stageState.type == StageData.STAGE_TYPE.BOSS)
         {
@@ -37,23 +42,29 @@ public class PlayerProvider : MonoBehaviour
         player.OnGameOver += () => {
             OnGameOver?.Invoke();
         };
+
+        SetPostProcess(0);
+    }
+
+    public void SetPostProcess(float weight)
+    {
+        volume.weight = weight;
     }
 
 
     public void NormalGameBegin()
     {
+        transform.DOMoveX(Stage.stageState.startPos.x, 1f).SetEase(Ease.Linear);
         StartCoroutine(player.NormalGameBegin());
     }
     public void BossGameBegin()
     {
+        playerMove.DoMove(new Vector3(5,0,0), 2f);
         StartCoroutine(player.BossGameBegin());
     }
     public void NormalGameStart()
     {
-        moveList.ForEach(info =>
-        {
-            info.SetMove(true);
-        });
+        playerMove.SetMove(true);
 
         player.NormalGameStart();
     }
@@ -63,9 +74,7 @@ public class PlayerProvider : MonoBehaviour
     }
     public void NormalGameOver()
     {
-        moveList.ForEach(info => {
-            info.SetMove(false);
-        });
+        playerMove.SetMove(false);
 
         player.GameOver();
     }
@@ -75,14 +84,27 @@ public class PlayerProvider : MonoBehaviour
     }
     public void NormalGameClear()
     {
-        moveList.ForEach(info => {
-            info.SetMove(false);
-        });
+        playerMove.SetMove(false);
 
         player.NormalGameClear();
     }
     public void BossGameClear()
     {
         player.BossGameClear();
+    }
+
+    // ジャンプコルーチン
+    public IEnumerator JumpRoutine(Vector3 endPos)
+    {
+        player.GetAnimator().Play("Jump");
+
+        var anime = DOTween.Sequence();
+        anime.Append(transform.DOJump(endPos, 4f, 1, 4f)).SetEase(curve).OnStart(() => {
+            player.JumpRotate();
+        }) ;
+        
+        yield return new WaitWhile(() => anime.IsPlaying());
+
+        player.GetAnimator().Play("Run_Static");
     }
 }

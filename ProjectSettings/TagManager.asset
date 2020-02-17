@@ -10,6 +10,10 @@ TagManager:
   - TapHit
   - Character
   - DeadLine
+  - Gimmick
+  - FireBall
+  - Boss
+  - Police
   layers:
   - Default
   - TransparentFX

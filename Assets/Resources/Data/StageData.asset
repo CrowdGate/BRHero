@@ -14,25 +14,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StageList:
   - stageNo: 1
+    chapterNo: 1
     type: 0
     startPos: {x: -30, y: 0, z: 0}
     endPos: {x: 60, y: 0, z: 0}
     checkPointList:
     - {x: 20, y: 0, z: 0}
   - stageNo: 2
+    chapterNo: 2
     type: 0
     startPos: {x: -30, y: 0, z: 0}
     endPos: {x: 70, y: 0, z: 0}
     checkPointList:
     - {x: 23, y: 0, z: 0}
   - stageNo: 3
+    chapterNo: 3
     type: 0
     startPos: {x: -30, y: 0, z: 0}
     endPos: {x: 70, y: 0, z: 0}
     checkPointList:
     - {x: 15, y: 0, z: 0}
   - stageNo: 4
+    chapterNo: 4
     type: 1
-    startPos: {x: 0, y: 0, z: 0}
+    startPos: {x: -20, y: 0, z: 0}
     endPos: {x: 0, y: 0, z: 0}
     checkPointList: []

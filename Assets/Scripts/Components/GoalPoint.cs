@@ -12,6 +12,8 @@ public class GoalPoint : MonoBehaviour
     public float endPosX { get; private set; } = 0;
     public bool isBegin { get; private set; } = false;
 
+    [SerializeField] GameObject bossObj;
+    [SerializeField] Animator animator;
     [SerializeField] Transform throwPos;
     [SerializeField] Fireball fireball;
 
@@ -19,24 +21,23 @@ public class GoalPoint : MonoBehaviour
     public event Action OnGameStart;
 
     Collider collider;
-    Animator animator;
+    
 
     private void Awake()
     {
         collider = GetComponent<Collider>();
-        animator = GetComponent<Animator>();
 
-        animator.Play("Idle_SexyDance");
+        animator.Play("Idle");
 
-        if (Stage.isCheckPoint) startPosX = Stage.stageState.endPos.x;
+        if (Stage.isCheckPoint || !Stage.isChapterBegin) startPosX = Stage.stageState.endPos.x;
         else startPosX = Stage.stageState.startPos.x + 10f;
         transform.position = new Vector3(startPosX, transform.position.y, transform.position.z);
 
         endPosX = Stage.stageState.endPos.x;
 
-        fireball.OnFireHit += () => {
-            fireball.Stop(transform.localPosition);
-        };
+        //fireball.OnFireHit += () => {
+        //    fireball.Stop(transform.localPosition);
+        //};
     }
 
     // キャラがゴールしたか
@@ -53,27 +54,26 @@ public class GoalPoint : MonoBehaviour
     public IEnumerator BeginRoutine()
     {
         isBegin = true;
-        transform.localRotation = Quaternion.Euler(0, 0, 0);
-        animator.Play("GrenadeThrow");
-
-        yield return new WaitForSeconds(1.5f);
-
+        bossObj.transform.localRotation = Quaternion.Euler(0, 0, 0);
+        animator.Play("Shoot");
         fireball.Play(throwPos.position, 1f);
 
         yield return new WaitForSeconds(1f);
 
+        fireball.Stop(transform.localPosition);
+
         animator.Play("Run_Static");
 
         var anime2 = DOTween.Sequence();
-        anime2.Append(transform.DOLocalRotate(new Vector3(0, 90, 0), 0.3f));
+        anime2.Append(bossObj.transform.DOLocalRotate(new Vector3(0, 90, 0), 0.3f));
         anime2.Join(transform.DOMoveX(endPosX, 2f));
 
         yield return new WaitWhile(() => anime2.IsPlaying());
 
-        animator.Play("Idle_SexyDance");
+        animator.Play("Idle");
         isBegin = false;
         OnGameStart?.Invoke();
-        transform.DOLocalRotate(new Vector3(0, -90, 0), 0.3f);
+        bossObj.transform.DOLocalRotate(new Vector3(0, -90, 0), 0.3f);
     }
     public void GameStart()
     {
@@ -82,7 +82,7 @@ public class GoalPoint : MonoBehaviour
     public void PlayResult()
     {
         animator.Play("Run_Static");
-        transform.DOLocalRotate(new Vector3(0, 90, 0), 0.3f);
+        bossObj.transform.DOLocalRotate(new Vector3(0, 90, 0), 0.3f);
         transform.DOMoveX(200, 5f);
     }
     public void GameOver()
